@@ -10,55 +10,58 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
 
         try {
             if (request.method === 'GET') {
-                const vendorId = request.parameters.vendorId;
-                if (!vendorId) throw new Error('Missing vendorId parameter on GET.');
+                const purchaseOrderId = request.parameters.PurchaseOrderId;
+                if (!purchaseOrderId) throw new Error('Missing purchaseOrderId parameter on GET.');
 
-                const vendorRec = record.load({
-                    type: record.Type.VENDOR,
-                    id: vendorId
+                const PORecord = record.load({
+                    type: record.Type.PURCHASE_ORDER,
+                    id: purchaseOrderId
                 });
 
-                const unableToLogin = vendorRec.getValue('custentity_unable_to_login');
-                const loginFailureReason = vendorRec.getValue('custentity_reason_for_login_failure');
-                const vendorName = vendorRec.getValue('altname');
+                const notResubmitted = PORecord.getValue('custbody_not_resub_chxbox');
+                const noResubReason = PORecord.getValue('custbody_reason_for_no_resub');
+                const PONumber = PORecord.getValue('tranid');
 
-                const form = ui.createForm({ title: `Edit Vendor: ${vendorName}` });
+                const form = ui.createForm({ title: `Edit Purchase Order: ${PONumber}` });
 
-                form.addFieldGroup({ id: 'main_grp', label: 'Vendor Info' });
+                form.addFieldGroup({ 
+                    id: 'main_grp', 
+                    label: 'Purchase Order Info' 
+                });
 
-                // Hidden field to persist vendorId
+                // Hidden field to persist purchaseOrderId
                 const hiddenIdField = form.addField({
-                    id: 'custpage_vendorid_hidden',
+                    id: 'custpage_poid_hidden',
                     type: ui.FieldType.TEXT,
-                    label: 'Vendor Internal ID'
+                    label: 'Purchase Order Internal ID'
                 });
                 hiddenIdField.updateDisplayType({ displayType: ui.FieldDisplayType.HIDDEN });
-                hiddenIdField.defaultValue = vendorId;
+                hiddenIdField.defaultValue = purchaseOrderId;
 
-                // Display Vendor Name
+                // Display Purchase Order Number
                 form.addField({
-                    id: 'custpage_vendorname',
+                    id: 'custpage_purchaseorder',
                     type: ui.FieldType.TEXT,
-                    label: 'Vendor',
+                    label: 'Purchase Order Number',
                     container: 'main_grp'
                 }).updateDisplayType({ displayType: ui.FieldDisplayType.INLINE })
-                  .defaultValue = vendorName;
+                  .defaultValue = PONumber;
 
                 // Checkbox
                 form.addField({
                     id: 'custpage_verified',
                     type: ui.FieldType.CHECKBOX,
-                    label: 'Unable to Login?',
+                    label: 'Not Being Resubmitted',
                     container: 'main_grp'
-                }).defaultValue = unableToLogin ? 'T' : 'F';
+                }).defaultValue = notResubmitted ? 'T' : 'F';
 
                 // Textarea
                 form.addField({
                     id: 'custpage_notes',
                     type: ui.FieldType.TEXTAREA,
-                    label: 'Reason for Login Failure',
+                    label: 'Reason for Not Being Resubmitted',
                     container: 'main_grp'
-                }).defaultValue = loginFailureReason || '';
+                }).defaultValue = noResubReason || '';
 
                 form.addSubmitButton({ label: 'Save Changes' });
 
@@ -67,36 +70,36 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
             } else if (request.method === 'POST') {
                 log.debug('POST Parameters', request.parameters);
 
-                const vendorId = request.parameters.custpage_vendorid_hidden;
-                if (!vendorId) throw new Error('Missing vendorId parameter on POST.');
+                const POId = request.parameters.custpage_poid_hidden;
+                if (!POId) throw new Error('Missing purchaseOrderId parameter on POST.');
 
                 const newChecked = request.parameters.custpage_verified === 'T';
                 const newNote = request.parameters.custpage_notes || '';
 
-                const vendorRec = record.load({
+                const PORec = record.load({
                     type: record.Type.VENDOR,
-                    id: vendorId,
+                    id: POId,
                     isDynamic: true
                 });
 
-                vendorRec.setValue({ fieldId: 'custentity_unable_to_login', value: newChecked });
-                vendorRec.setValue({ fieldId: 'custentity_reason_for_login_failure', value: newNote });
+                PORec.setValue({ fieldId: 'custbody_not_resub_chxbox', value: newChecked });
+                PORec.setValue({ fieldId: 'custbody_reason_for_no_resub', value: newNote });
 
-                const savedId = vendorRec.save();
+                const savedId = PORec.save();
 
-                // Build confirmation with 10-second live countdown
-                const form = ui.createForm({ title: 'Vendor Updated' });
+                // Build confirmation with 5-second live countdown
+                const form = ui.createForm({ title: 'Purchase Order Updated' });
                 const html = `
                     <div style="padding:10px;font-size:14px;">
-                        ✅ Vendor <b>${savedId}, ${vendorRec.getValue('altname')}</b> updated successfully.<br><br>
+                        ✅ Vendor <b>${savedId}, ${PORec.getValue('altname')}</b> updated successfully.<br><br>
                         <a href="/app/common/entity/vendor.nl?id=${savedId}" target="_blank">View Vendor Record</a><br><br>
-                        This window will auto-close in <span id="countdown">10</span> seconds.
+                        This window will auto-close in <span id="countdown">5</span> seconds.
                         <script>
                             if (window.opener && !window.opener.closed) {
                                 window.opener.location.reload();
                             }
 
-                            let seconds = 10;
+                            let seconds = 5;
                             const countdownEl = document.getElementById('countdown');
                             const interval = setInterval(() => {
                                 seconds -= 1;
@@ -105,7 +108,7 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
                                     clearInterval(interval);
                                     window.close();
                                 }
-                            }, 1000);
+                            }, 500);
                         </script>
                     </div>
                 `;
