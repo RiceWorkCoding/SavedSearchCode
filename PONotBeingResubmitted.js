@@ -77,7 +77,7 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
                 const newNote = request.parameters.custpage_notes || '';
 
                 const PORec = record.load({
-                    type: record.Type.VENDOR,
+                    type: record.Type.PURCHASE_ORDER,
                     id: POId,
                     isDynamic: true
                 });
@@ -91,8 +91,8 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
                 const form = ui.createForm({ title: 'Purchase Order Updated' });
                 const html = `
                     <div style="padding:10px;font-size:14px;">
-                        ✅ Vendor <b>${savedId}, ${PORec.getValue('altname')}</b> updated successfully.<br><br>
-                        <a href="/app/common/entity/vendor.nl?id=${savedId}" target="_blank">View Vendor Record</a><br><br>
+                        ✅ Purchase Order <b>${savedId}, ${PORec.getValue('tranid')}</b> updated successfully.<br><br>
+                        <a href="/app/accounting/transactions/purchord.nl?id=${savedId}" target="_blank">View Purchase Order Record</a><br><br>
                         This window will auto-close in <span id="countdown">5</span> seconds.
                         <script>
                             if (window.opener && !window.opener.closed) {
