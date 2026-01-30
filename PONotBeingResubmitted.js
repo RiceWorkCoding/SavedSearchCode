@@ -10,7 +10,7 @@ define(['N/record', 'N/ui/serverWidget', 'N/log'], (record, ui, log) => {
 
         try {
             if (request.method === 'GET') {
-                const purchaseOrderId = request.parameters.PurchaseOrderId;
+                const purchaseOrderId = request.parameters.purchaseOrderId;
                 if (!purchaseOrderId) throw new Error('Missing purchaseOrderId parameter on GET.');
 
                 const PORecord = record.load({
